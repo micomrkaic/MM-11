@@ -1,0 +1,5 @@
+sq dup * 
+sqrt 0.5 ^ 
+cube 3 ^ 
+ln2 ln 2 ln / 
+qu sq sq 
