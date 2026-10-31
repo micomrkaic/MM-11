@@ -270,7 +270,7 @@ static int op_mrot(State *s)   { unroll_n(S, 2); return RPN_OK; }
 /* For pick/roll the index itself is on the stack: after popping it,
    valid depths are 0 .. depth-2 (depth counted before the pop). */
 static int op_roll(State *s) {
-  int n;
+  int n = 0;
   if (stack_depth(S) < 2) { pop(S); return rpn_err("roll: no item to roll"); }
   TRY(pop_index(s, &n, 0, stack_depth(S) - 2));
   roll_n(S, n);
@@ -278,7 +278,7 @@ static int op_roll(State *s) {
 }
 
 static int op_pick(State *s) {
-  int n;
+  int n = 0;
   if (stack_depth(S) < 2) { pop(S); return rpn_err("pick: no item to pick"); }
   TRY(pop_index(s, &n, 0, stack_depth(S) - 2));
   return push(S, peek(S, n));
@@ -390,7 +390,7 @@ static int op_statscalc(State *s) {
 
 /* ======================= display ======================= */
 static int op_p(State *s) {
-  int n;
+  int n = 0;
   TRY(pop_index(s, &n, 0, MAX_PRECISION));
   cfg.precision = n;
   return RPN_OK;
@@ -425,7 +425,7 @@ static int op_savewords(State *s)  { (void)s; return save_words(); }
 static int op_loadwords(State *s)  { (void)s; return load_words(false); }
 static int op_delword(State *s) {
   if (word_count == 0) { pop(S); return rpn_err("delword: no words defined"); }
-  int i;
+  int i = 0;
   TRY(pop_index(s, &i, 0, word_count - 1));
   return delete_word(i);
 }
