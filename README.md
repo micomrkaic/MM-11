@@ -10,16 +10,25 @@ Forth-like word system. Its features:
 - 64-level undo
 - a scriptable batch mode
 
-## Build
+## Build and install
 
 ```
-make            # ./mm_11 (needs GNU readline; on macOS uses Homebrew readline or libedit)
-make test       # golden-file tests
-make debug      # ./mm_11-debug with AddressSanitizer + UBSan
-make test-debug # tests under the sanitizers
-make docs       # regenerate COMMANDS.md
-make install    # PREFIX=/usr/local by default
+make                 # ./mm_11 (needs GNU readline; macOS uses Homebrew readline or libedit)
+make test            # golden-file tests
+make debug           # ./mm_11-debug with AddressSanitizer + UBSan
+make test-debug      # tests under the sanitizers
+make docs            # regenerate COMMANDS.md
+make install         # to ~/.local: bin/mm_11, share/man/man1/mm_11.1, share/doc/mm_11/
+make uninstall       # remove those
 ```
+
+`PREFIX` defaults to `~/.local`, so no root is needed; `sudo make install
+PREFIX=/usr/local` installs system-wide. Make sure `~/.local/bin` is in your
+`PATH`. `man mm_11` works once `~/.local/share/man` is on the man path, which
+most distributions handle automatically when the directory exists.
+
+The build uses `-Werror`, so a new compiler release can turn a fresh warning
+into a build failure. If that happens, `make WARN=-Wall` builds without it.
 
 ## Use
 
@@ -42,8 +51,8 @@ one value per line. They exit with status 1 if any error occurred. Pass `-n` to
 skip autoloading saved words and registers.
 
 The full command list is in [COMMANDS.md](COMMANDS.md), which is generated from
-the dispatch table. In the calculator, `help` lists every command and
-`see <name>` describes one.
+the dispatch table, and `man mm_11` covers the same ground. In the calculator,
+`help` lists every command and `see <name>` describes one.
 
 ## Behaviour worth knowing
 
@@ -131,6 +140,7 @@ and `registers.txt` as is.
 | `tab_complete.c` | readline completion over commands and user words |
 | `tokenizer.c` | reentrant tokenizer |
 | `util_func.c` | number parsing, config paths |
+| `mm_11.1` | man page |
 | `tests/` | `*.rpn` scripts with expected `*.out`; `run.sh` |
 
 ## Adding a command
@@ -139,7 +149,7 @@ Write `static int op_x(State *s)` in `ops.c` and add one row to `ops[]`, giving
 its name, minimum stack depth, category, stack picture and description. The
 dispatcher checks arity, and help, completion and `see` pick the command up
 automatically. Run `make docs` and `UPDATE=1 tests/run.sh ./mm_11` afterwards,
-then review the diff.
+then review the diff, and add the name to the category list in `mm_11.1`.
 
 ## Still to come in later calculators
 

@@ -1,11 +1,20 @@
 # Makefile for MM-11
 #
-#   make            optimized build       -> ./mm_11
-#   make debug      ASan + UBSan build    -> ./mm_11-debug
-#   make test       golden-file tests against ./mm_11
-#   make test-debug the same tests under the sanitizers
-#   make docs       regenerate COMMANDS.md from the dispatch table
-#   make install    copy to $(PREFIX)/bin
+#   make              optimized build       -> ./mm_11
+#   make debug        ASan + UBSan build    -> ./mm_11-debug
+#   make test         golden-file tests against ./mm_11
+#   make test-debug   the same tests under the sanitizers
+#   make docs         regenerate COMMANDS.md from the dispatch table
+#   make install      install to $(PREFIX)  (default ~/.local)
+#   make uninstall    remove what install put there
+#   make clean
+#
+# Installed files:
+#   $(PREFIX)/bin/mm_11
+#   $(PREFIX)/share/man/man1/mm_11.1
+#   $(PREFIX)/share/doc/mm_11/{README.md,COMMANDS.md,CHANGES.md,LICENSE}
+#
+# System-wide: sudo make install PREFIX=/usr/local
 
 CC       ?= cc
 CSTD      = -std=c17
@@ -13,7 +22,12 @@ WARN      = -Wall -Wextra -Werror -Wshadow -Wformat=2
 CPPFLAGS += -D_POSIX_C_SOURCE=200809L -MMD -MP
 CFLAGS   ?= -O2 -g
 LDLIBS    = -lreadline -lm
-PREFIX   ?= /usr/local
+
+PREFIX   ?= $(HOME)/.local
+BINDIR   ?= $(PREFIX)/bin
+MANDIR   ?= $(PREFIX)/share/man/man1
+DOCDIR   ?= $(PREFIX)/share/doc/mm_11
+INSTALL  ?= install
 
 TARGET   ?= mm_11
 BUILD    ?= build
@@ -23,6 +37,7 @@ SRC = main.c interp.c ops.c words.c state.c stack.c registers.c my_math.c \
       tokenizer.c util_func.c
 OBJ = $(SRC:%.c=$(BUILD)/%.o)
 DEP = $(OBJ:.o=.d)
+DOCS = README.md COMMANDS.md CHANGES.md LICENSE
 
 # macOS ships libedit as "readline"; prefer Homebrew's GNU readline if present.
 ifeq ($(shell uname -s),Darwin)
@@ -37,7 +52,7 @@ endif
 
 SAN = -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -fno-sanitize-recover=all
 
-.PHONY: all debug test test-debug docs install clean
+.PHONY: all debug test test-debug docs install uninstall clean
 
 all: $(TARGET)
 
@@ -63,8 +78,20 @@ docs: $(TARGET)
 	./$(TARGET) --commands > COMMANDS.md
 
 install: $(TARGET)
-	install -d $(DESTDIR)$(PREFIX)/bin
-	install -m 755 $(TARGET) $(DESTDIR)$(PREFIX)/bin/
+	$(INSTALL) -d $(DESTDIR)$(BINDIR) $(DESTDIR)$(MANDIR) $(DESTDIR)$(DOCDIR)
+	$(INSTALL) -m 755 $(TARGET) $(DESTDIR)$(BINDIR)/mm_11
+	$(INSTALL) -m 644 mm_11.1 $(DESTDIR)$(MANDIR)/mm_11.1
+	$(INSTALL) -m 644 $(DOCS) $(DESTDIR)$(DOCDIR)/
+	@case ":$$PATH:" in *":$(BINDIR):"*) ;; \
+	  *) echo "note: $(BINDIR) is not in your PATH" ;; esac
+	@case ":$${MANPATH:-}:" in *":$(PREFIX)/share/man:"*) ;; \
+	  *) command -v manpath >/dev/null 2>&1 && manpath 2>/dev/null | tr : '\n' | grep -qx "$(PREFIX)/share/man" \
+	     || echo "note: 'man mm_11' may need MANPATH to include $(PREFIX)/share/man" ;; esac
+
+uninstall:
+	rm -f $(DESTDIR)$(BINDIR)/mm_11
+	rm -f $(DESTDIR)$(MANDIR)/mm_11.1
+	rm -rf $(DESTDIR)$(DOCDIR)
 
 clean:
 	rm -rf build build-debug mm_11 mm_11-debug
